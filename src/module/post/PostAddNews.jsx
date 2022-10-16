@@ -20,6 +20,8 @@ import {
 import {
   addDoc,
   collection,
+  doc,
+  getDoc,
   getDocs,
   query,
   serverTimestamp,
@@ -32,24 +34,23 @@ import { db } from "../../firebase-app/firebase-config";
 import { async } from "@firebase/util";
 import { useAuth } from "../../contexts/authContext";
 import { toast } from "react-toastify";
+import FieldCheckboxes from "../../components/field/FieldCheckboxes";
 
 const PostAddNewStyles = styled.div``;
 
 const PostAddNew = () => {
   const { userInfo } = useAuth();
-  console.log(
-    "🚀 ~ file: PostAddNews.jsx ~ line 33 ~ PostAddNew ~ userInfo",
-    userInfo
-  );
+
   const { control, watch, setValue, handleSubmit, getValues, reset } = useForm({
     mode: "onChange",
     defaultValues: {
       title: "",
       slug: "",
       status: 1,
-      categoryId: "",
+      category: {},
       hot: false,
       image: "",
+      user: {},
     },
   });
 
@@ -57,11 +58,29 @@ const PostAddNew = () => {
   const watchStatus = watch("status");
   const watchCategory = watch("category");
   const watchHot = watch("hot");
-  console.log("PostAddNew ~ watchCategory", watchCategory);
 
   const [categories, setCategories] = useState([]);
   const [selectCategory, setSelectCategory] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function fetchUserData() {
+      if (!userInfo.email) return;
+      const q = query(
+        collection(db, "users"),
+        where("email", "==", userInfo.email)
+      );
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach((doc) => {
+        console.log(doc.data());
+        setValue("user", {
+          id: doc.id,
+          ...doc.data(),
+        });
+      });
+    }
+    fetchUserData();
+  }, [userInfo.email]);
 
   // custom hook
   const {
@@ -80,12 +99,13 @@ const PostAddNew = () => {
       cloneValues.slug = slugify(values.title || values.slug, { lower: true });
       // Chuyển values.status thành kiểu number thay vì string
       cloneValues.status = Number(values.status);
-
       const colRef = collection(db, "posts");
+      console.log(cloneValues);
       await addDoc(colRef, {
         ...cloneValues,
+        categoryId: cloneValues.category.id,
+        userId: cloneValues.user.id,
         image,
-        userId: userInfo.uid,
         createAt: serverTimestamp(),
       });
 
@@ -95,17 +115,13 @@ const PostAddNew = () => {
         title: "",
         slug: "",
         status: 1,
-        categoryId: "",
+        category: {},
         hot: false,
         image: "",
+        user: {},
       });
       handleResetUpload();
       setSelectCategory({});
-
-      console.log(
-        "🚀 ~ file: PostAddNews.jsx ~ line 37 ~ addPostHandler ~ cloneValues",
-        cloneValues
-      );
     } catch (error) {
       setLoading(false);
     } finally {
@@ -135,10 +151,16 @@ const PostAddNew = () => {
     document.title = "Monkey Blogging - Add new post";
   });
 
-  const handleClickOption = (item) => {
+  const handleClickOption = async (item) => {
     // item này sẽ là object gồm id, name, slug
     setValue("categoryId", item.id);
     setSelectCategory(item);
+    const colRef = doc(db, "categories", item.id);
+    const docData = await getDoc(colRef);
+    setValue("category", {
+      id: docData.id,
+      ...docData.data(),
+    });
   };
 
   return (
@@ -215,43 +237,40 @@ const PostAddNew = () => {
           <Field>
             <Label>Status</Label>
             <div className="flex items-center gap-x-5">
-              <Radio
-                name="status"
-                control={control}
-                checked={Number(watchStatus) === postStatus.APPROVED}
-                onClick={() => setValue("status", "approved")}
-                value={postStatus.APPROVED}
-              >
-                Approved
-              </Radio>
-              <Radio
-                name="status"
-                control={control}
-                checked={Number(watchStatus) === postStatus.PENDING}
-                onClick={() => setValue("status", "pending")}
-                value={postStatus.PENDING}
-              >
-                Pending
-              </Radio>
-              <Radio
-                name="status"
-                control={control}
-                checked={Number(watchStatus) === postStatus.REJECTED}
-                onClick={() => setValue("status", "reject")}
-                value={postStatus.REJECTED}
-              >
-                Reject
-              </Radio>
+              <FieldCheckboxes>
+                {" "}
+                <Radio
+                  name="status"
+                  control={control}
+                  checked={Number(watchStatus) === postStatus.APPROVED}
+                  onClick={() => setValue("status", "approved")}
+                  value={postStatus.APPROVED}
+                >
+                  Approved
+                </Radio>
+                <Radio
+                  name="status"
+                  control={control}
+                  checked={Number(watchStatus) === postStatus.PENDING}
+                  onClick={() => setValue("status", "pending")}
+                  value={postStatus.PENDING}
+                >
+                  Pending
+                </Radio>
+                <Radio
+                  name="status"
+                  control={control}
+                  checked={Number(watchStatus) === postStatus.REJECTED}
+                  onClick={() => setValue("status", "reject")}
+                  value={postStatus.REJECTED}
+                >
+                  Reject
+                </Radio>
+              </FieldCheckboxes>
             </div>
           </Field>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-10 mb-10">
-          <Field>
-            <Label>Author</Label>
-            <Input control={control} placeholder="Find the author"></Input>
-          </Field>
-        </div>
         <Button
           type="submit"
           className="mx-auto w-[250px] "

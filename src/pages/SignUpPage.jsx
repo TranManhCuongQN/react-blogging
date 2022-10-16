@@ -15,10 +15,17 @@ import { toast } from "react-toastify";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "../firebase-app/firebase-config";
 import { useNavigate, NavLink } from "react-router-dom";
-import { addDoc, collection, doc, setDoc } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  serverTimestamp,
+  setDoc,
+} from "firebase/firestore";
 import AuthenticationPage from "./AuthenticationPage";
 import InputPasswordToggle from "../components/input/InputPasswordToggle";
 import slugify from "slugify";
+import { userRole, userStatus } from "../utils/constants";
 
 const SignUpPageStyles = styled.div`
   min-height: 100vh;
@@ -79,6 +86,8 @@ const SignUpPage = () => {
 
     await updateProfile(auth.currentUser, {
       displayName: values.fullname,
+      photoURL:
+        "https://i.pinimg.com/564x/60/ef/c3/60efc3cc07701c8eb33f3635f0b2acba.jpg",
     });
 
     const colRef = collection(db, "users");
@@ -88,9 +97,14 @@ const SignUpPage = () => {
       email: values.email,
       password: values.password,
       username: slugify(values.fullname, { lower: true }),
+      avatar:
+        "https://i.pinimg.com/564x/60/ef/c3/60efc3cc07701c8eb33f3635f0b2acba.jpg",
+      status: userStatus.ACTIVE,
+      role: userRole.USER,
+      createdAt: serverTimestamp(),
     });
 
-    toast.success("Create user successfully!!!");
+    toast.success("Register successfully!!!");
     navigate("/");
   };
 

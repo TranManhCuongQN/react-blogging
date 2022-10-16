@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import styled from "styled-components";
 
 const PostImageStyles = styled.div`
@@ -7,18 +7,19 @@ const PostImageStyles = styled.div`
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center;
     border-radius: inherit;
   }
 `;
-const PostImage = ({ className = "", url = "", alt = "", to = null }) => {
+const PostImage = ({ className = "", url = "", alt = "", to = "" }) => {
   if (to) {
     return (
-      <NavLink to={to} style={{ display: "block" }}>
+      <Link to={`/${to}`} style={{ display: "block" }}>
         <PostImageStyles className={`post-image ${className}`}>
           {/* loading="lazy của chrome support khi nào tới hình thì nó mới load" */}
           <img src={url} alt={alt} loading="lazy" />
         </PostImageStyles>
-      </NavLink>
+      </Link>
     );
   }
   return (

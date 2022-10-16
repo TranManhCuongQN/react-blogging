@@ -28,6 +28,10 @@ const DashboardStyles = styled.div`
 `;
 const DashboardLayout = ({ children }) => {
   const { userInfo } = useAuth();
+  console.log(
+    "🚀 ~ file: DashboardLayout.jsx ~ line 31 ~ DashboardLayout ~ userInfo",
+    userInfo
+  );
 
   if (!userInfo) return <NotFoundPage></NotFoundPage>;
   return (

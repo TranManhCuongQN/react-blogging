@@ -7,7 +7,12 @@ import {
 } from "firebase/storage";
 import { useState } from "react";
 
-export default function useFirebaseImage(setValue, getValues) {
+export default function useFirebaseImage(
+  setValue,
+  getValues,
+  imageName = null,
+  cb = null
+) {
   const [progress, setProgress] = useState(0);
   const [image, setImage] = useState("");
 
@@ -63,13 +68,17 @@ export default function useFirebaseImage(setValue, getValues) {
 
   const handleDeleteImage = () => {
     const storage = getStorage();
-    const imageRef = ref(storage, "images/" + getValues("image_name"));
+    const imageRef = ref(
+      storage,
+      "images/" + (imageName || getValues("image_name"))
+    );
 
     deleteObject(imageRef)
       .then(() => {
         setImage("");
         setProgress(0);
         console.log("Remove image successfully");
+        cb && cb();
       })
       .catch((error) => {
         console.log(
@@ -86,9 +95,13 @@ export default function useFirebaseImage(setValue, getValues) {
   };
   return {
     image,
+    setImage,
     handleResetUpload,
     progress,
     handleSelectImage,
     handleDeleteImage,
   };
 }
+
+// * User Update
+// Mình chỉ xóa đc image trong storage trên firebase chưa xóa đc image trong database cho nên mình viết thêm callback (cb). Callback này là 1 cái function gọi khi nào khi mà chúng ta thực hiện chức năng xóa thành công. Thì chúng ta sẽ kiểm tra điều kiện nếu mà có callback đó thì ta thực hiện callback đó. Thì callback đó đc viết bên UserUpdate là deleteAvatar. Sau khi xóa hình xong thì nó sẽ cập nhật cho user đó xóa trong database luôn.

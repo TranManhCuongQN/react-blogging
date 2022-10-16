@@ -39,7 +39,6 @@ const SignInPage = () => {
   });
 
   const { userInfo } = useAuth();
-  console.log("UserInfo: ", userInfo);
 
   const navigate = useNavigate();
 
@@ -62,7 +61,6 @@ const SignInPage = () => {
 
   useEffect(() => {
     const arrError = Object.values(errors);
-    console.log("arrError: ", arrError);
     if (arrError.length > 0) {
       toast.error(arrError[0]?.message, {
         pauseOnHover: false,
